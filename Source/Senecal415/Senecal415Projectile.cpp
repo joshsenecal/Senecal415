@@ -54,13 +54,9 @@ void ASenecal415Projectile::BeginPlay() {
 void ASenecal415Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnHit called"));
-
 	// Only add impulse and destroy projectile if we hit a physics
 	if ((OtherActor != nullptr) && (OtherActor != this) && (OtherComp != nullptr) && OtherComp->IsSimulatingPhysics())
 	{
-		
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Physics block: Destroy() called from impulse branch"));
 	
 		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
 
@@ -69,28 +65,30 @@ void ASenecal415Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 
 	if (OtherActor != nullptr) {
 
-		if (colorP) {
-			UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(colorP, HitComp, NAME_None, FVector(-20.f, 0.f, 0.f), FRotator(0.f), EAttachLocation::KeepRelativeOffset, true);
-			particleComp->SetNiagaraVariableLinearColor(FString("RandomColor"), randColor);
-			ballMesh->DestroyComponent();
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("BOOM"));
-			CollisionComp->BodyInstance.SetCollisionProfileName("NoCollision");
-		}
-
-		float frameNum = UKismetMathLibrary::RandomFloatInRange(0.f, 3.f);
-		float decalSize = UKismetMathLibrary::RandomFloatInRange(20.f, 40.f);
-
-		auto Decal = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), baseMat, FVector(decalSize, decalSize, decalSize), Hit.Location, Hit.Normal.Rotation(), 0.f);
-		auto MatInstance = Decal->CreateDynamicMaterialInstance();
-
-		MatInstance->SetVectorParameterValue("Color", randColor);
-		MatInstance->SetScalarParameterValue("Frame", frameNum);
+		FVector decalLocation = Hit.Location;
 
 		APerlinProcTerrain* procTerrain = Cast<APerlinProcTerrain>(OtherActor);
 
 		if (procTerrain) {
 			procTerrain->AlterMesh(Hit.ImpactPoint);
+			decalLocation = Hit.Location - procTerrain->Depth;
 		}
+
+		if (colorP) {
+			UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(colorP, HitComp, NAME_None, FVector(-20.f, 0.f, 0.f), FRotator(0.f), EAttachLocation::KeepRelativeOffset, true);
+			particleComp->SetNiagaraVariableLinearColor(FString("RandomColor"), randColor);
+			ballMesh->DestroyComponent();
+			CollisionComp->BodyInstance.SetCollisionProfileName("NoCollision");
+		}
+
+		float frameNum = UKismetMathLibrary::RandomFloatInRange(0.f, 3.f);
+		float decalSize = UKismetMathLibrary::RandomFloatInRange(80.f, 150.f);
+
+		auto Decal = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), baseMat, FVector(decalSize, decalSize, decalSize), decalLocation, Hit.Normal.Rotation(), 0.f);
+		auto MatInstance = Decal->CreateDynamicMaterialInstance();
+
+		MatInstance->SetVectorParameterValue("Color", randColor);
+		MatInstance->SetScalarParameterValue("Frame", frameNum);
 
 	}
 }
