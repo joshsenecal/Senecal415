@@ -12,7 +12,8 @@ APerlinProcTerrain::APerlinProcTerrain()
 	PrimaryActorTick.bCanEverTick = false;
 
 	ProcMesh = CreateDefaultSubobject<UProceduralMeshComponent>("Proc Mesh");
-	ProcMesh->SetupAttachment(GetRootComponent());
+	RootComponent = ProcMesh;
+	ProcMesh->bUseAsyncCooking = true;
 
 }
 
@@ -20,12 +21,29 @@ APerlinProcTerrain::APerlinProcTerrain()
 void APerlinProcTerrain::BeginPlay()
 {
 	Super::BeginPlay();
+	GenerateMap();
+}
 
+void APerlinProcTerrain::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	GenerateMap();
+}
+
+void APerlinProcTerrain::GenerateMap()
+{
+	ClearMeshData();
 	CreateVertices();
 	CreateTriangles();
-	ProcMesh->CreateMeshSection(sectionID, Vertices, Triangles, Normals, UV0, UpVertexColors, TArray<FProcMeshTangent>(), true);
-	ProcMesh->SetMaterial(0, Mat);
-	
+
+	UKismetProceduralMeshLibrary::CalculateTangentsForMesh(Vertices, Triangles, UV0, Normals, Tangents);
+
+	ProcMesh->CreateMeshSection(sectionID, Vertices, Triangles, Normals, UV0, UpVertexColors, Tangents, true);
+
+	if (Mat)
+	{
+		ProcMesh->SetMaterial(0, Mat);
+	}
 }
 
 // Called every frame
@@ -37,24 +55,39 @@ void APerlinProcTerrain::Tick(float DeltaTime)
 
 void APerlinProcTerrain::AlterMesh(FVector impactPoint)
 {
+
+	bool bChanged = false;
 	for (int i = 0; i < Vertices.Num(); i++) {
 		FVector tempVector = impactPoint - this->GetActorLocation();
-
-		if (FVector(Vertices[i] - tempVector).Size() < radius) {
+		float dist = FVector(Vertices[i] - tempVector).Size();
+		if (dist < radius) {
 			Vertices[i] = Vertices[i] - Depth;
-			ProcMesh->UpdateMeshSection(sectionID, Vertices, Normals, UV0, UpVertexColors, TArray<FProcMeshTangent>());
+			bChanged = true;
 		}
+	}
+
+	if (bChanged)
+	{
+		ProcMesh->UpdateMeshSection(sectionID, Vertices, Normals, UV0, UpVertexColors, Tangents);
 	}
 }
 
 
+
+void APerlinProcTerrain::ClearMeshData()
+{
+	Vertices.Empty();
+	Triangles.Empty();
+	UV0.Empty();
+	Normals.Empty();
+	Tangents.Empty();
+}
 
 void APerlinProcTerrain::CreateVertices()
 {
 	for (int X = 0; X <= XSize; X++) {
 		for (int Y = 0; Y <= YSize; Y++) {
 			float Z = FMath::PerlinNoise2D(FVector2D(X * NoiseScale + 0.1, Y * NoiseScale + 0.1)) * ZMultiplier;
-			GEngine->AddOnScreenDebugMessage(-1, 999.0f, FColor::Yellow, FString::Printf(TEXT("Z: %f"), Z));
 			Vertices.Add(FVector(X * Scale, Y * Scale, Z));
 			UV0.Add(FVector2D(X * UVScale, Y * UVScale));
 		}

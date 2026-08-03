@@ -53,9 +53,15 @@ void ASenecal415Projectile::BeginPlay() {
 
 void ASenecal415Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("OnHit called"));
+
 	// Only add impulse and destroy projectile if we hit a physics
 	if ((OtherActor != nullptr) && (OtherActor != this) && (OtherComp != nullptr) && OtherComp->IsSimulatingPhysics())
 	{
+		
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Physics block: Destroy() called from impulse branch"));
+	
 		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
 
 		Destroy();
@@ -67,6 +73,7 @@ void ASenecal415Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 			UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(colorP, HitComp, NAME_None, FVector(-20.f, 0.f, 0.f), FRotator(0.f), EAttachLocation::KeepRelativeOffset, true);
 			particleComp->SetNiagaraVariableLinearColor(FString("RandomColor"), randColor);
 			ballMesh->DestroyComponent();
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("BOOM"));
 			CollisionComp->BodyInstance.SetCollisionProfileName("NoCollision");
 		}
 

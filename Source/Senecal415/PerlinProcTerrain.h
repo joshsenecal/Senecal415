@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ProceduralMeshComponent.h"
 #include "PerlinProcTerrain.generated.h"
 
 class UProceduralMeshComponent;
@@ -17,6 +18,9 @@ class SENECAL415_API APerlinProcTerrain : public AActor
 public:	
 	// Sets default values for this actor's properties
 	APerlinProcTerrain();
+
+	UFUNCTION(CallInEditor, Category = "Terrain")
+		void GenerateMap();
 
 	UPROPERTY(EditAnywhere, Meta = (ClampMin = 0))
 		int XSize = 0;
@@ -37,17 +41,18 @@ public:
 		float UVScale = 0;
 
 	UPROPERTY(EditAnywhere)
-		float radius;
+		float radius = 100.0f;
 
 	UPROPERTY(EditAnywhere)
-		FVector Depth;
+		FVector Depth = FVector(0.f, 0.f, 50.f);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 	UPROPERTY(EditAnywhere)
-		UMaterialInterface* Mat;
+	UMaterialInterface* Mat = nullptr;
 
 public:	
 	// Called every frame
@@ -63,9 +68,11 @@ private:
 	TArray<FVector2D> UV0;
 	TArray<FVector> Normals;
 	TArray<FColor> UpVertexColors;
+	TArray<FProcMeshTangent> Tangents;
 
 	int sectionID = 0;
 
+	void ClearMeshData();
 	void CreateVertices();
 	void CreateTriangles();
 
