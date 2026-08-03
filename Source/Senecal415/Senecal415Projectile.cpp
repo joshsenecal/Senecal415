@@ -48,7 +48,7 @@ void ASenecal415Projectile::BeginPlay() {
 	dmiMat = UMaterialInstanceDynamic::Create(projMat, this);
 	ballMesh->SetMaterial(0, dmiMat);
 
-	dmiMat->SetVectorParameterValue("ProjColor", randColor);
+	dmiMat->SetVectorParameterValue("Color", randColor);
 }
 
 void ASenecal415Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -71,8 +71,9 @@ void ASenecal415Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 		}
 
 		float frameNum = UKismetMathLibrary::RandomFloatInRange(0.f, 3.f);
+		float decalSize = UKismetMathLibrary::RandomFloatInRange(20.f, 40.f);
 
-		auto Decal = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), baseMat, FVector4(UKismetMathLibrary::RandomFloatInRange(20.f, 40.f)), Hit.Location, Hit.Normal.Rotation(), 0.f);
+		auto Decal = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), baseMat, FVector(decalSize, decalSize, decalSize), Hit.Location, Hit.Normal.Rotation(), 0.f);
 		auto MatInstance = Decal->CreateDynamicMaterialInstance();
 
 		MatInstance->SetVectorParameterValue("Color", randColor);
