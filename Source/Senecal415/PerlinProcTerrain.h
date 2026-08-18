@@ -62,7 +62,9 @@ public:
 		void AlterMesh(FVector impactPoint);
 
 private:
-	UProceduralMeshComponent* ProcMesh;
+	UPROPERTY(VisibleAnywhere)
+		UProceduralMeshComponent* ProcMesh;
+	
 	TArray<FVector> Vertices;
 	TArray<int> Triangles;
 	TArray<FVector2D> UV0;
